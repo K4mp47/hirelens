@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -23,10 +24,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{
+          minHeight: "100vh",
+          background: "linear-gradient(180deg, #070b14 0%, #070b14 70%, #0b1c44 100%)",
+        }}
       >
+        <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
         {children}
       </body>
     </html>
