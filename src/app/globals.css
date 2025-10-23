@@ -25,6 +25,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -73,7 +74,7 @@
   --accent-foreground: oklch(0.15 0.02 260);
 
   /* === Destructive === */
-  --destructive: oklch(0.58 0.25 25);
+  --destructive: oklch(58.371% 0.19438 19.403 / 0.795);
   --destructive-foreground: oklch(0.98 0.02 260);
 
   /* === Borders, Inputs, Rings === */

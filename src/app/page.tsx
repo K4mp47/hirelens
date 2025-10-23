@@ -19,7 +19,7 @@ export default function Home() {
   }, [auth.isAuthenticated, router, next]);
 
   return (
-    <main className="flex flex-col items-center lg:mx-36">
+    <main className="flex flex-col items-center lg:mx-36 mb-8 lg:mb-20">
       <NavBar />
       <section className="flex flex-col items-center justify-center w-full gap-6 px-4 py-8">
         <div className="text-center w-full">
