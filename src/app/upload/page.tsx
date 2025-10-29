@@ -21,6 +21,7 @@ import { usePuterStore } from '@/lib/puter'
 import { convertPdfToImage } from '@/lib/pdf2img'
 import { generateUUID } from '@/lib/utils'
 import { prepareInstructions } from '@/constants'
+import { useRouter } from 'next/navigation'
  
 const formSchema = z.object({
   companyName: z.string().min(2).max(50),
@@ -42,7 +43,7 @@ const UploadPage = () => {
   })
 
   const { auth, isLoading, fs, ai, kv } = usePuterStore();
-
+  const router = useRouter();
 
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [statusText, setStatusText] = React.useState("");
@@ -135,6 +136,7 @@ const UploadPage = () => {
     // setIsProcessing(false);
     setStatusText("Analysis complete! You can view your resume on the home page.");
     console.log("Analysis complete:", data);
+    router.push(`/resume/${uuid}`);
   };
 
   return (
@@ -142,7 +144,7 @@ const UploadPage = () => {
       <NavBar />
       <div className='mx-4 flex flex-col items-center mb-20'>
         <h1 className="Titles mt-8 md:text-8xl mask-x-from-70%">Smart Feedback for your Dream Job</h1>
-        <h2 className='subtitles mb-12'> Drop your resume for an ATS score and improvement tips</h2>
+        <h2 className='subtitles mb-12 mt-8'> Drop your resume for an ATS score and improvement tips</h2>
         { isProcessing ? (
           <div className="flex flex-col items-center gap-4">
             <div className="flex-col gap-4 w-full flex items-center justify-center h-112">
