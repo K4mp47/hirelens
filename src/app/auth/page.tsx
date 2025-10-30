@@ -15,6 +15,11 @@ const AuthPage = () => {
   const next = searchParams?.get("next") || "";
   const router = useRouter();
 
+  const handleLogin = () => {
+    auth.signIn();
+    router.push("/");
+  };
+
   useEffect(() => {
     if (auth.isAuthenticated) {
       router.push(next);
@@ -41,7 +46,7 @@ const AuthPage = () => {
                     Log out
                   </Button>
                 ) : (
-                  <Button variant="default" onClick={auth.signIn} className="w-full cursor-pointer">
+                  <Button variant="default" onClick={handleLogin} className="w-full cursor-pointer">
                     Log In
                   </Button>
                 )}

@@ -11,11 +11,11 @@ const NavBar = () => {
             <path d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor"></path>
           </svg>
         </div>
-        <h1 className="hidden md:flex text-xl font-mono font-bold">HIRELENS</h1>
+        <h1 className="hidden md:flex text-xl font-mono font-bold"><Link href="/">HIRELENS</Link></h1>
       </div>
       <NavigationMenuList>
         <Button variant="default" size="sm">
-          <Link href="#">Upload Resume</Link>
+          <Link href="/upload">Upload Resume</Link>
         </Button>
         <Button variant="ghost" size="sm">
           <Link href="/auth">Log out</Link>

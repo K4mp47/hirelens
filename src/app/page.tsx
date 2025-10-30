@@ -1,16 +1,32 @@
 "use client"
 import NavBar from "@/components/NavBar";
 import ResumeCard from "@/components/ResumeCard";
-import { resumes } from "@/constants";
+// import { resumes } from "@/constants";
 import { usePuterStore } from "@/lib/puter";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 
 export default function Home() {
-  const { auth } = usePuterStore();
+  const { auth, kv } = usePuterStore();
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loadingResumes, setLoadingResumes] = useState(true);
   const next = "/auth?next=/";
   const router = useRouter();
+
+  useEffect(() => { 
+    const fetchResumes = async () => {
+      const storedResumes = (await kv.list('resume:*', true)) as KVItem[]
+
+      const resumeData: Resume[] = storedResumes.map(item => (
+        JSON.parse(item.value) as Resume
+      ))
+
+      setResumes(resumeData);
+      setLoadingResumes(false);
+    }
+    fetchResumes();
+  }, [kv]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) {
@@ -19,7 +35,7 @@ export default function Home() {
   }, [auth.isAuthenticated, router, next]);
 
   return (
-    <main className="flex flex-col items-center lg:mx-36">
+    <main className="flex flex-col items-center lg:mx-36 mb-8 lg:mb-20">
       <NavBar />
       <section className="flex flex-col items-center justify-center w-full gap-6 px-4 py-8">
         <div className="text-center w-full">
@@ -27,12 +43,26 @@ export default function Home() {
           <h2 className="subtitles mt-6">Review your submission and check AI-powered feedback.</h2>
         </div>
       </section>
-      { resumes.length > 0 && (
+      {!loadingResumes ? (resumes.length > 0 && (
         <section className="px-4 w-full flex flex-col lg:grid lg:grid-cols-3 items-center gap-4">
           {resumes.map((resume) => (
             <ResumeCard key={resume.id} resume={resume} />
           ))}
         </section>
+      )) : (
+        <div className="flex flex-col md:flex-row gap-4 w-full m-4 p-4">
+          <div className="md:w-full animate-pulse">
+            <div className="bg-gray-700 rounded-md h-48 w-full" />
+            <div className="bg-gray-700 rounded-md h-12 w-3/4 mb-4 mt-4" />
+            <div className="bg-gray-700 rounded-md h-12 w-3/4 mb-4 mt-4" />
+          </div>
+          <div className="md:w-1/2 animate-pulse">
+            <div className="bg-gray-700 rounded-md h-12 w-3/4 mb-4" />
+            <div className="bg-gray-700 rounded-md h-48 w-full" />
+            <div className="bg-gray-700 rounded-md h-12 w-1/2 mt-4" />
+
+          </div>
+        </div>
       )}
     </main>
   );
