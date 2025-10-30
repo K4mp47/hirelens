@@ -1,7 +1,7 @@
 "use client"
 import { Button } from "@/components/ui/button";
 import { usePuterStore } from "@/lib/puter"
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export const meta = () => ([
@@ -9,7 +9,7 @@ export const meta = () => ([
   { name: "description", content: "Log into your account" }
 ])
 
-const AuthPage = () => {
+const AuthContent = () => {
   const { isLoading, auth } = usePuterStore();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") || "";
@@ -56,6 +56,19 @@ const AuthPage = () => {
         </section>
       </div>
     </main>  
+  )
+}
+
+const AuthPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="p-8 w-full animate-pulse max-w-md mx-auto">
+        <div className="h-6 bg-gray-200 rounded mb-4" />
+        <div className="h-4 bg-gray-200 rounded w-5/6" />
+      </div>
+    }>
+      <AuthContent />
+    </Suspense>
   )
 }
 
