@@ -1,7 +1,8 @@
 "use client"
 import NavBar from "@/components/NavBar";
 import ResumeCard from "@/components/ResumeCard";
-// import { resumes } from "@/constants";
+import ResumeCardFake from "@/components/ResumeCardFake";
+import { resumes as constantresume } from "@/constants";
 import { usePuterStore } from "@/lib/puter";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,10 +44,16 @@ export default function Home() {
           <h2 className="subtitles mt-6">Review your submission and check AI-powered feedback.</h2>
         </div>
       </section>
-      {!loadingResumes ? (resumes.length > 0 && (
+      {!loadingResumes ? (resumes.length > 0 ? (
         <section className="px-4 w-full flex flex-col lg:grid lg:grid-cols-3 items-center gap-4">
           {resumes.map((resume) => (
             <ResumeCard key={resume.id} resume={resume} />
+          ))}
+        </section>
+      ) : (
+        <section className="px-4 w-full flex flex-col lg:grid lg:grid-cols-3 items-center gap-4">
+          {constantresume.map((resume) => (
+            <ResumeCardFake key={resume.id} resume={resume} />
           ))}
         </section>
       )) : (
