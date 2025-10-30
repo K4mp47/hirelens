@@ -1,14 +1,14 @@
 "use client"
 
 import { usePuterStore } from '@/lib/puter'
-import { ArrowRight, Undo2 } from 'lucide-react'
+import { ScissorsLineDashedIcon, Undo2 } from 'lucide-react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import ATS from '@/components/ATS'
 import Details from '@/components/Details'
 import Summary from '@/components/Summary'
-import { Feedback } from '@/types/feedback'
+import { Button } from '@/components/ui/button'
 
 export const meta = () => ([
   { title: "Resumind | Review" },
@@ -20,9 +20,11 @@ const Resume = () => {
   const router = useRouter()
 
   const { auth, isLoading, fs, kv } = usePuterStore();
-  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
-  const [resumeUrl, setResumeUrl] = React.useState<string | null>(null);
-  const [feedback, setFeedback] = React.useState<Feedback | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback>('' as unknown as Feedback);
+  const [jobDescription, setJobDescription] = useState<string>('');
+
   const { id } = useParams()
 
   useEffect(() => {
@@ -59,10 +61,14 @@ const Resume = () => {
 
       const imgBlob = new Blob([imageBlob], { type: 'image/png' });
       const imageUrl = URL.createObjectURL(imgBlob);
+
+      const jobDescription = data.jobDescription || "No job description provided.";
       
+      setJobDescription(jobDescription);
       setImageUrl(imageUrl);
       setResumeUrl(resumeUrl);
       setFeedback(data.feedback || null);
+      
       console.log("Feedback:", data.feedback, "Image Path:", data.imagePath, "Resume Path:", data.resumePath);
     };
 
@@ -72,7 +78,7 @@ const Resume = () => {
   return (
     <main className="flex items-center justify-center min-h-screen w-full">
       <nav className="absolute top-4 left-4">
-        <button className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer flex items-center gap-1 text-center" onClick={() => router.push(`/upload`)}><Undo2 /> Go Back</button>
+        <button className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer flex items-center gap-1 text-center" onClick={() => router.back()}><Undo2 /> Go Back</button>
       </nav>
       <div>
         <section className='flex flex-col mt-20 gap-4 p-4'>
@@ -80,7 +86,6 @@ const Resume = () => {
           <p className="subtitles mt-0">Here you can review your resume details.</p>
           {!imageUrl && (
             <div className="flex flex-col md:flex-row gap-4 w-full">
-              <h2 className='subtitles'> Near to finish for feedback...</h2>
               <div className="md:w-full animate-pulse">
                 <div className="bg-gray-700 rounded-md h-48 w-full" />
               </div>
@@ -91,22 +96,24 @@ const Resume = () => {
             </div>
           )}
           {imageUrl && resumeUrl && (
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="md:w-1/2">
+            <div className="flex flex-col md:flex-row gap-4 justify-between">
+              <div className="md:w-1/3">
                 <h3 className="text-xl font-semibold mb-2">Profile Image</h3>
                 <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="subtitles cursor-pointer flex mb-4">
-                  <ArrowRight /> View Full Resume
+                  <Button className='cursor-pointer hover:bg-primary hover:text-white' variant="outline" ><ScissorsLineDashedIcon />View Full Resume</Button>
                 </a>
-                <Image src={imageUrl} alt="Profile" className="w-full h-auto rounded-md border" layout='responsive' width={10} height={10} />
+                <div className="w-full md:w-10/12">
+                  <Image src={imageUrl} alt="Profile" className="rounded-md border object-cover" layout='responsive' width={300} height={300} />
+                </div>
               </div>
-              <div className="md:w-1/2">
+              <div className="md:w-2/3">
                 <h3 className="text-xl font-semibold mb-2">Resume Document</h3>
-                <Summary feedback={feedback} />
+                <Summary feedback={feedback} jobDescription={jobDescription} />
                 <ATS score={feedback?.ATS.score || 0} suggestions={feedback?.ATS.tips || []} />
                 <Details feedback={feedback} />
               </div>
             </div>
-          )}
+          ) }
         </section>
       </div>
     </main>

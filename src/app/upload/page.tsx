@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation'
 const formSchema = z.object({
   companyName: z.string().min(2).max(50),
   jobTitle: z.string().min(2).max(50),
-  jobDescription: z.string().min(50).max(5000),
+  jobDescription: z.string().min(50).max(20000),
   uploadFile: z.instanceof(File),
 })
 

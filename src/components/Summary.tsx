@@ -1,5 +1,6 @@
 import React from 'react'
 import ScoreGauge from './ScoreGauge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 const Category = ({ title, score }: { title: string; score: number }) => {
   
@@ -33,7 +34,7 @@ const Category = ({ title, score }: { title: string; score: number }) => {
   )
 }
 
-const Summary = ({ feedback }: { feedback: Feedback }) => {
+const Summary = ({ feedback, jobDescription }: { feedback: Feedback, jobDescription: string }) => {
 
   return (
     <div className='flex-col text-left'>
@@ -44,6 +45,18 @@ const Summary = ({ feedback }: { feedback: Feedback }) => {
           <p className="subtitles">based on the overall score.</p>
         </div>
       </div>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="important-notice">
+          <AccordionTrigger className='font-semibold text-xl'>
+            Full Job Description             
+          </AccordionTrigger>
+          <AccordionContent>
+            <pre className="subtitles whitespace-pre-wrap font-sans">
+              {jobDescription}
+            </pre>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       <Category title="Tone & Style" score={feedback.toneAndStyle.score} />
       <Category title="Content" score={feedback.content.score} />
       <Category title="Structure" score={feedback.structure.score} />
