@@ -1,8 +1,18 @@
+/**
+ * The ScoreCircle component displays a score as a circular progress bar.
+ * It's used to visually represent a score out of 100.
+ * @param {object} props - The component props.
+ * @param {number} props.score - The score to display, defaults to 75.
+ * @returns {JSX.Element} The rendered ScoreCircle component.
+ */
 const ScoreCircle = ({ score = 75 }: { score: number }) => {
+  // SVG circle parameters
   const radius = 40;
   const stroke = 8;
   const normalizedRadius = radius - stroke / 2;
   const circumference = 2 * Math.PI * normalizedRadius;
+
+  // Calculate the progress and stroke offset
   const progress = score / 100;
   const strokeDashoffset = circumference * (1 - progress);
 
@@ -23,7 +33,8 @@ const ScoreCircle = ({ score = 75 }: { score: number }) => {
           strokeWidth={stroke}
           fill="transparent"
         />
-        {/* Partial circle with gradient */}
+
+        {/* Foreground circle with gradient */}
         <defs>
           <linearGradient id="grad" x1="1" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#48a9f3" />
@@ -43,7 +54,7 @@ const ScoreCircle = ({ score = 75 }: { score: number }) => {
         />
       </svg>
 
-      {/* Score and issues */}
+      {/* Score text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-bold text-sm">{`${score}/100`}</span>
       </div>

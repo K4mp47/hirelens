@@ -2,9 +2,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 
+/**
+ * The NavBar component provides the main navigation for the application.
+ * It includes links to the homepage, resume upload page, and a logout button.
+ * @returns {JSX.Element} The rendered NavBar component.
+ */
 const NavBar = () => {
   return (
-     <NavigationMenu className="p-4 w-full flex justify-between border-b border-foreground/20">
+    <NavigationMenu className="p-4 w-full flex justify-between border-b border-foreground/20">
+      {/* Logo and brand name */}
       <div className="flex items-center gap-2">
         <div className="size-4">
           <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -13,6 +19,8 @@ const NavBar = () => {
         </div>
         <h1 className="hidden md:flex text-xl font-mono font-bold"><Link href="/">HIRELENS</Link></h1>
       </div>
+
+      {/* Navigation links */}
       <NavigationMenuList>
         <Button variant="default" size="sm">
           <Link href="/upload">Upload Resume</Link>
@@ -22,7 +30,7 @@ const NavBar = () => {
         </Button>
       </NavigationMenuList>
     </NavigationMenu>
-  )
-}
+  );
+};
 
-export default NavBar
+export default NavBar;

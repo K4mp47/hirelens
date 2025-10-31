@@ -1,28 +1,33 @@
+# HIRELENS
+
+HIRELENS is a web application designed to help you track your job applications and improve your resume. It uses AI-powered feedback to rate your resume and provide suggestions for improvement, helping you stand out to recruiters and pass through Applicant Tracking Systems (ATS).
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-First, run the development server:
+To get the development environment running locally, follow these steps:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1.  **Install dependencies:**
+    Make sure you have Node.js and npm installed. Then, install the project dependencies:
+    ```bash
+    npm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Run the development server:**
+    Once the dependencies are installed, you can start the development server:
+    ```bash
+    npm run dev
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3.  **Open the application:**
+    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
-## Learn More
+## Learn More about Next.js
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about the Next.js framework used in this project, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
