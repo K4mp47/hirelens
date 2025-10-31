@@ -1,10 +1,19 @@
+/**
+ * The ScoreGauge component displays a score as a semi-circular gauge.
+ * It's a space-efficient way to visually represent a score out of 100.
+ * @param {object} props - The component props.
+ * @param {number} props.score - The score to display, defaults to 75.
+ * @returns {JSX.Element} The rendered ScoreGauge component.
+ */
 const ScoreGauge = ({ score = 75 }: { score?: number }) => {
+  // SVG circle parameters
   const radius = 45;
   const stroke = 10;
   const normalizedRadius = radius - stroke / 2 - 5;
   const circumference = 2 * Math.PI * normalizedRadius;
+
+  // Calculate the progress and stroke offset for a semi-circle
   const progress = score / 100;
-  // show only half of the circle as the gauge; offset scales with the half-length
   const strokeDashoffset = (circumference / 2) * (1 - progress);
 
   return (
@@ -15,7 +24,7 @@ const ScoreGauge = ({ score = 75 }: { score?: number }) => {
         viewBox="0 0 100 100"
         className="transform -rotate-180 translate-y-2"
       >
-        {/* Background circle */}
+        {/* Background semi-circle */}
         <circle
           cx="50"
           cy="50"
@@ -28,7 +37,8 @@ const ScoreGauge = ({ score = 75 }: { score?: number }) => {
           fill="transparent"
           transform="rotate(-180 50 50)"
         />
-        {/* Partial semicircle with gradient */}
+
+        {/* Foreground semi-circle with gradient */}
         <defs>
           <linearGradient id="grad" x1="1" y1="0" x2="0" y2="1">
             <stop offset="20%" stopColor="#48a9f3" />
@@ -48,7 +58,7 @@ const ScoreGauge = ({ score = 75 }: { score?: number }) => {
         />
       </svg>
 
-      {/* Score and issues */}
+      {/* Score text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-bold text-sm">{`${score}/100`}</span>
       </div>

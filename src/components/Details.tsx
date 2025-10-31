@@ -2,12 +2,18 @@ import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger,  } from "./ui/accordion";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
-
+/**
+ * A badge that displays a score with a color indicating its level (good, average, or poor).
+ * @param {object} props - The component props.
+ * @param {number} props.score - The score to display.
+ * @returns {JSX.Element} The rendered ScoreBadge component.
+ */
 const ScoreBadge = ({ score }: { score: number }) => {
   return (
     <div
       className={cn(
         "flex flex-row gap-1 items-center px-2 py-0.5 rounded-[96px]",
+        // Dynamically set background color based on the score
         score > 69
           ? "bg-green-400"
           : score > 39
@@ -18,6 +24,7 @@ const ScoreBadge = ({ score }: { score: number }) => {
       <p
         className={cn(
           "text-sm font-medium",
+          // Dynamically set text color based on the score
           score > 69
             ? "text-green-800"
             : score > 39
@@ -31,6 +38,13 @@ const ScoreBadge = ({ score }: { score: number }) => {
   );
 };
 
+/**
+ * A header for a feedback category, displaying the title and score.
+ * @param {object} props - The component props.
+ * @param {string} props.title - The title of the category.
+ * @param {number} props.categoryScore - The score for the category.
+ * @returns {JSX.Element} The rendered CategoryHeader component.
+ */
 const CategoryHeader = ({
   title,
   categoryScore,
@@ -46,6 +60,12 @@ const CategoryHeader = ({
   );
 };
 
+/**
+ * The content of a feedback category, displaying tips and explanations.
+ * @param {object} props - The component props.
+ * @param {Array<object>} props.tips - An array of tips.
+ * @returns {JSX.Element} The rendered CategoryContent component.
+ */
 const CategoryContent = ({
   tips,
 }: {
@@ -53,6 +73,7 @@ const CategoryContent = ({
 }) => {
   return (
     <div className="flex flex-col gap-4 items-center w-full">
+      {/* Grid of tips with icons */}
       <div className="bg-popover w-full rounded-lg px-5 py-4 grid grid-cols-2 gap-4">
         {tips.map((tip, index) => (
           <div className="flex flex-row gap-2 items-center" key={index}>
@@ -65,6 +86,8 @@ const CategoryContent = ({
           </div>
         ))}
       </div>
+
+      {/* Detailed explanation for each tip */}
       <div className="flex flex-col gap-4 w-full">
         {tips.map((tip, index) => (
           <div
@@ -92,10 +115,17 @@ const CategoryContent = ({
   );
 };
 
+/**
+ * The Details component displays detailed feedback for a resume, categorized into sections.
+ * @param {object} props - The component props.
+ * @param {Feedback} props.feedback - The feedback object containing scores and tips.
+ * @returns {JSX.Element} The rendered Details component.
+ */
 const Details = ({ feedback }: { feedback: Feedback }) => {
   return (
     <div className="flex flex-col gap-4 w-full bg-card mt-4 p-4 rounded-lg">
       <Accordion type="single" collapsible className="w-full">
+        {/* Tone & Style feedback section */}
         <AccordionItem value="tone-style">
           <AccordionTrigger>
             <CategoryHeader
@@ -107,6 +137,8 @@ const Details = ({ feedback }: { feedback: Feedback }) => {
             <CategoryContent tips={feedback.toneAndStyle.tips} />
           </AccordionContent>
         </AccordionItem>
+
+        {/* Content feedback section */}
         <AccordionItem value="content">
           <AccordionTrigger>
             <CategoryHeader
@@ -118,6 +150,8 @@ const Details = ({ feedback }: { feedback: Feedback }) => {
             <CategoryContent tips={feedback.content.tips} />
           </AccordionContent>
         </AccordionItem>
+
+        {/* Structure feedback section */}
         <AccordionItem value="structure">
           <AccordionTrigger>
             <CategoryHeader
@@ -129,6 +163,8 @@ const Details = ({ feedback }: { feedback: Feedback }) => {
             <CategoryContent tips={feedback.structure.tips} />
           </AccordionContent>
         </AccordionItem>
+
+        {/* Skills feedback section */}
         <AccordionItem value="skills">
           <AccordionTrigger>
             <CategoryHeader
