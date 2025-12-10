@@ -16,7 +16,7 @@ export const meta = () => ([
 ])
 
 const Resume = () => {
-  
+
   const router = useRouter()
 
   const { auth, isLoading, fs, kv } = usePuterStore();
@@ -28,7 +28,7 @@ const Resume = () => {
   const { id } = useParams()
 
   useEffect(() => {
-    if(!isLoading && !auth.isAuthenticated) {
+    if (!isLoading && !auth.isAuthenticated) {
       router.push(`/auth?next=/resume/${id}`)
     }
   }, [isLoading, auth.isAuthenticated, router, id])
@@ -52,7 +52,7 @@ const Resume = () => {
 
       const pdfBlob = new Blob([resumeBlob], { type: 'application/pdf' });
       const resumeUrl = URL.createObjectURL(pdfBlob);
-      
+
       const imageBlob = await fs.read(data.imagePath);
       if (!imageBlob) {
         console.error("Failed to read image blob");
@@ -63,12 +63,12 @@ const Resume = () => {
       const imageUrl = URL.createObjectURL(imgBlob);
 
       const jobDescription = data.jobDescription || "No job description provided.";
-      
+
       setJobDescription(jobDescription);
       setImageUrl(imageUrl);
       setResumeUrl(resumeUrl);
       setFeedback(data.feedback || null);
-      
+
       console.log("Feedback:", data.feedback, "Image Path:", data.imagePath, "Resume Path:", data.resumePath);
     };
 
@@ -78,7 +78,7 @@ const Resume = () => {
   return (
     <main className="flex items-center justify-center min-h-screen w-full">
       <nav className="absolute top-4 left-4">
-        <button className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer flex items-center gap-1 text-center" onClick={() => router.back()}><Undo2 /> Go Back</button>
+        <button className="bg-primary text-white px-4 py-2 rounded-md cursor-pointer flex items-center gap-1 text-center" onClick={() => router.push("/")}><Undo2 /> Go Back</button>
       </nav>
       <div>
         <section className='flex flex-col mt-20 gap-4 p-4'>
@@ -113,7 +113,7 @@ const Resume = () => {
                 <Details feedback={feedback} />
               </div>
             </div>
-          ) }
+          )}
         </section>
       </div>
     </main>
