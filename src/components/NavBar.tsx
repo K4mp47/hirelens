@@ -1,36 +1,46 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { FileSearch2, LogOut, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
+import { usePuterStore } from "@/lib/puter";
+import { cn } from "@/lib/utils";
 
-/**
- * The NavBar component provides the main navigation for the application.
- * It includes links to the homepage, resume upload page, and a logout button.
- * @returns {JSX.Element} The rendered NavBar component.
- */
-const NavBar = () => {
+const links = [
+  { href: "/", label: "Dashboard" },
+  { href: "/upload", label: "New review" },
+];
+
+export default function NavBar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const signOut = usePuterStore((state) => state.auth.signOut);
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/auth");
+  };
+
   return (
-    <NavigationMenu className="p-4 w-full flex justify-between border-b border-foreground/20">
-      {/* Logo and brand name */}
-      <div className="flex items-center gap-2">
-        <div className="size-4">
-          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor"></path>
-          </svg>
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2 font-semibold" aria-label="HireLens dashboard">
+          <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground"><FileSearch2 className="size-5" aria-hidden="true" /></span>
+          <span>HireLens</span>
+        </Link>
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
+          {links.map((link) => (
+            <Button key={link.href} variant="ghost" asChild className={cn(pathname === link.href && "bg-accent text-accent-foreground")}>
+              <Link href={link.href}>{link.label}</Link>
+            </Button>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm"><Link href="/upload"><Plus className="size-4" aria-hidden="true" />New review</Link></Button>
+          <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out"><LogOut className="size-4" /></Button>
         </div>
-        <h1 className="hidden md:flex text-xl font-mono font-bold"><Link href="/">HIRELENS</Link></h1>
       </div>
-
-      {/* Navigation links */}
-      <NavigationMenuList>
-        <Button variant="default" size="sm">
-          <Link href="/upload">Upload Resume</Link>
-        </Button>
-        <Button variant="ghost" size="sm">
-          <Link href="/auth">Log out</Link>
-        </Button>
-      </NavigationMenuList>
-    </NavigationMenu>
+    </header>
   );
-};
-
-export default NavBar;
+}
