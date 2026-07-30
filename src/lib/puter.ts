@@ -1,11 +1,8 @@
 import { create } from "zustand";
 
-// --- START: MINIMAL MOCK TYPES FOR COMPILATION ---
-// Questi tipi sono definiti per permettere a TypeScript di compilare il codice.
-// Nel tuo progetto reale, dovresti importare questi tipi dall'SDK di Puter.
-
 interface PuterUser {
-  id: string;
+  uuid?: string;
+  id?: string;
   username: string;
   email?: string;
 }
@@ -29,63 +26,58 @@ interface ChatMessage {
 
 interface PuterChatOptions {
   model?: string;
-  system_prompt?: string;
   max_tokens?: number;
+  temperature?: number;
 }
 
 interface AIResponse {
   message: {
     content: string | ChatContent[];
-    role: "assistant"
-  }
+    role: string;
+  };
 }
 
 interface KVItem {
   key: string;
   value: string;
 }
-// --- END: MINIMAL MOCK TYPES FOR COMPILATION ---
 
+interface PuterSdk {
+  auth: {
+    getUser: () => Promise<PuterUser>;
+    isSignedIn: () => Promise<boolean>;
+    signIn: () => Promise<void>;
+    signOut: () => Promise<void>;
+  };
+  fs: {
+    write: (path: string, data: string | File | Blob) => Promise<File | undefined>;
+    read: (path: string) => Promise<Blob>;
+    upload: (files: File[] | Blob[]) => Promise<FSItem>;
+    delete: (path: string) => Promise<void>;
+    readdir: (path: string) => Promise<FSItem[] | undefined>;
+  };
+  ai: {
+    chat: {
+      (prompt: string, options?: PuterChatOptions): Promise<AIResponse>;
+      (messages: ChatMessage[], testMode?: boolean, options?: PuterChatOptions): Promise<AIResponse>;
+    };
+    img2txt: (image: string | File | Blob, testMode?: boolean) => Promise<string>;
+  };
+  kv: {
+    get: (key: string) => Promise<string | null>;
+    set: (key: string, value: string) => Promise<boolean>;
+    delete: (key: string) => Promise<boolean>;
+    list: (pattern: string, returnValues?: boolean) => Promise<string[] | KVItem[]>;
+    flush: () => Promise<boolean>;
+  };
+}
 
-// Define the global window.puter object for TypeScript
 declare global {
   interface Window {
-    puter: {
-      auth: {
-        getUser: () => Promise<PuterUser>;
-        isSignedIn: () => Promise<boolean>;
-        signIn: () => Promise<void>;
-        signOut: () => Promise<void>;
-      };
-      fs: {
-        write: (path: string, data: string | File | Blob) => Promise<File | undefined>;
-        read: (path: string) => Promise<Blob>;
-        upload: (files: File[] | Blob[]) => Promise<FSItem>;
-        delete: (path: string) => Promise<void>;
-        readdir: (path: string) => Promise<FSItem[] | undefined>;
-      };
-      ai: {
-        // La firma di 'chat' nell'interfaccia globale è più generica, ma il tuo store la tipa come Promise<object>
-        chat: (
-          prompt: string | ChatMessage[],
-          imageURL?: string | PuterChatOptions,
-          testMode?: boolean,
-          options?: PuterChatOptions
-        ) => Promise<object>;
-        img2txt: (image: string | File | Blob, testMode?: boolean) => Promise<string>;
-      };
-      kv: {
-        get: (key: string) => Promise<string | null>;
-        set: (key: string, value: string) => Promise<boolean>;
-        delete: (key: string) => Promise<boolean>;
-        list: (pattern: string, returnValues?: boolean) => Promise<string[] | KVItem[]>;
-        flush: () => Promise<boolean>;
-      };
-    };
+    puter?: PuterSdk;
   }
 }
 
-// Define the structure of the Puter store
 interface PuterStore {
   isLoading: boolean;
   error: string | null;
@@ -107,15 +99,6 @@ interface PuterStore {
     readDir: (path: string) => Promise<FSItem[] | undefined>;
   };
   ai: {
-    // Ho tipato le funzioni di AI per restituire un tipo coerente o 'undefined' in caso di errore
-    chat: (
-      prompt: string | ChatMessage[],
-      imageURL?: string | PuterChatOptions,
-      testMode?: boolean,
-      options?: PuterChatOptions
-    ) => Promise<AIResponse | undefined>;
-    // Ho rimosso AIResponse nel tipo di ritorno, poiché la funzione chat globale torna object.
-    // L'implementazione di feedback qui utilizza chat.
     feedback: (path: string, message: string) => Promise<AIResponse | undefined>;
     img2txt: (image: string | File | Blob, testMode?: boolean) => Promise<string | undefined>;
   };
@@ -130,221 +113,197 @@ interface PuterStore {
   clearError: () => void;
 }
 
-/**
- * A reusable helper function to safely access the Puter SDK.
- * @returns {object | null} The Puter SDK object or null if not available.
- */
-const getPuter = (): typeof window.puter | null =>
+const getPuter = (): PuterSdk | null =>
   typeof window !== "undefined" && window.puter ? window.puter : null;
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return fallback;
+};
 
 export const usePuterStore = create<PuterStore>((set, get) => {
-  /**
-    * Sets an error message in the store.
-    * @param {string} msg The error message.
-    */
-  const setError = (msg: string) => {
-    set({
-      error: msg,
+  const setError = (message: string, resetAuth = false) => {
+    set((state) => ({
+      error: message,
       isLoading: false,
-      auth: {
-        ...get().auth,
-        user: null,
-        isAuthenticated: false,
-      },
-    });
+      auth: resetAuth
+        ? { ...state.auth, user: null, isAuthenticated: false }
+        : state.auth,
+    }));
   };
 
-  /**
-    * A helper function to create safe Puter actions that check for Puter's availability.
-    * @param action A function that interacts with the Puter SDK.
-    * @returns An async function that wraps the Puter action.
-    */
-  const createPuterAction = <T extends (puter: typeof window.puter, ...args: any[]) => any>(action: T) => async (
-    ...args: Parameters<T> extends [typeof window.puter, ...infer R] ? R : Parameters<T>
-  ): Promise<Awaited<ReturnType<T>> | undefined> => {
+  const requirePuter = () => {
     const puter = getPuter();
-    if (!puter) {
-      setError("Puter.js not available");
-      return;
-    }
-    try {
-      // @ts-ignore: L'interferenza dei parametri di TypeScript è complessa qui, ma la logica è corretta.
-      return await action(puter, ...args);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "An unknown error occurred";
-      setError(msg);
-      // Restituisce undefined in caso di errore per coerenza con il tipo di ritorno della Promise
-      return undefined;
-    }
+    if (!puter) setError("Puter.js is not available. Reload the page and try again.");
+    return puter;
   };
 
-  /**
-    * Checks the authentication status of the user.
-    * @returns {Promise<boolean>} True if the user is signed in, false otherwise.
-    */
   const checkAuthStatus = async (): Promise<boolean> => {
-    const puter = getPuter();
-    if (!puter) {
-      setError("Puter.js not available");
-      return false;
-    }
+    const puter = requirePuter();
+    if (!puter) return false;
 
     set({ isLoading: true, error: null });
-
     try {
       const isSignedIn = await puter.auth.isSignedIn();
-      if (isSignedIn) {
-        const user = await puter.auth.getUser();
-        set({
-          auth: { ...get().auth, user, isAuthenticated: true },
-          isLoading: false,
-        });
-        return true;
-      } else {
-        set({
-          auth: { ...get().auth, user: null, isAuthenticated: false },
-          isLoading: false,
-        });
+      if (!isSignedIn) {
+        set((state) => ({ auth: { ...state.auth, user: null, isAuthenticated: false }, isLoading: false }));
         return false;
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to check auth status";
-      setError(msg);
+
+      const user = await puter.auth.getUser();
+      set((state) => ({ auth: { ...state.auth, user, isAuthenticated: true }, isLoading: false }));
+      return true;
+    } catch (error) {
+      setError(getErrorMessage(error, "Failed to check Puter authentication."), true);
       return false;
     }
   };
 
-  /**
-    * Initiates the sign-in process.
-    */
-  const signIn = async (): Promise<void> => {
-    const puter = getPuter();
-    if (!puter) {
-      setError("Puter.js not available");
-      return;
-    }
-
+  const signIn = async () => {
+    const puter = requirePuter();
+    if (!puter) return;
     set({ isLoading: true, error: null });
-
     try {
       await puter.auth.signIn();
       await checkAuthStatus();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Sign in failed";
-      setError(msg);
+    } catch (error) {
+      setError(getErrorMessage(error, "Puter sign in failed."));
     }
   };
 
-  /**
-    * Signs the user out.
-    */
-  const signOut = async (): Promise<void> => {
-    const puter = getPuter();
-    if (!puter) {
-      setError("Puter.js not available");
-      return;
-    }
-
+  const signOut = async () => {
+    const puter = requirePuter();
+    if (!puter) return;
     set({ isLoading: true, error: null });
-
     try {
       await puter.auth.signOut();
-      set({
-        auth: { ...get().auth, user: null, isAuthenticated: false },
-        isLoading: false,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Sign out failed";
-      setError(msg);
+      set((state) => ({ auth: { ...state.auth, user: null, isAuthenticated: false }, isLoading: false }));
+    } catch (error) {
+      setError(getErrorMessage(error, "Puter sign out failed."));
     }
   };
 
-  /**
-    * Refreshes the current user's data.
-    */
-  const refreshUser = createPuterAction(async (puter) => {
-    const user = await puter.auth.getUser();
-    set({
-      auth: { ...get().auth, user, isAuthenticated: true },
-      isLoading: false,
-    });
-    // Rimuovi il return di refreshUser poiché la funzione è definita come Promise<void> nell'interfaccia PuterStore
-  });
-
-  /**
-    * Initializes the Puter store and checks for the Puter SDK.
-    */
-  const init = (): void => {
-    // Evita di eseguire init multipli se puter è già pronto
-    if (get().puterReady) return;
-
-    if (getPuter()) {
-      set({ puterReady: true });
-      checkAuthStatus();
-      return;
+  const refreshUser = async () => {
+    const puter = requirePuter();
+    if (!puter) return;
+    try {
+      const user = await puter.auth.getUser();
+      set((state) => ({ auth: { ...state.auth, user, isAuthenticated: true }, isLoading: false }));
+    } catch (error) {
+      setError(getErrorMessage(error, "Failed to refresh the Puter user."));
     }
+  };
 
-    const interval = setInterval(() => {
+  const init = () => {
+    if (get().puterReady) return;
+    const ready = () => {
+      set({ puterReady: true, error: null });
+      void checkAuthStatus();
+    };
+
+    if (getPuter()) return ready();
+
+    const interval = window.setInterval(() => {
       if (getPuter()) {
-        clearInterval(interval);
-        set({ puterReady: true });
-        checkAuthStatus();
+        window.clearInterval(interval);
+        ready();
       }
     }, 100);
 
-    setTimeout(() => {
-      // Controlla se l'intervallo è ancora attivo prima di provare a cancellarlo
+    window.setTimeout(() => {
       if (!get().puterReady) {
-        clearInterval(interval);
-        setError("Puter.js failed to load within 10 seconds");
+        window.clearInterval(interval);
+        setError("Puter.js failed to load. Check your connection and reload the page.");
       }
     }, 10000);
   };
 
-  // Create safe actions for fs, ai, and kv using the helper
   const fsActions = {
-    write: createPuterAction((puter, path: string, data: string | File | Blob) => puter.fs.write(path, data)),
-    // La funzione 'read' di puter.fs ritorna solo Promise<Blob>, 
-    // ma la definizione dello store è Promise<Blob | undefined>
-    read: createPuterAction((puter, path: string) => puter.fs.read(path)),
-    readDir: createPuterAction((puter, path: string) => puter.fs.readdir(path)),
-    upload: createPuterAction((puter, files: File[] | Blob[]) => puter.fs.upload(files)),
-    delete: createPuterAction((puter, path: string) => puter.fs.delete(path)),
+    write: async (path: string, data: string | File | Blob) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.fs.write(path, data); } catch (error) { setError(getErrorMessage(error, "Puter file write failed.")); return undefined; }
+    },
+    read: async (path: string) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.fs.read(path); } catch (error) { setError(getErrorMessage(error, "Puter file read failed.")); return undefined; }
+    },
+    upload: async (files: File[] | Blob[]) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.fs.upload(files); } catch (error) { setError(getErrorMessage(error, "Puter upload failed.")); return undefined; }
+    },
+    delete: async (path: string) => {
+      const puter = requirePuter();
+      if (!puter) return;
+      try { await puter.fs.delete(path); } catch (error) { setError(getErrorMessage(error, "Puter file deletion failed.")); }
+    },
+    readDir: async (path: string) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.fs.readdir(path); } catch (error) { setError(getErrorMessage(error, "Puter directory read failed.")); return undefined; }
+    },
   };
 
   const aiActions = {
-    chat: createPuterAction((puter, prompt, imageURL, testMode, options) =>
-      puter.ai.chat(prompt, imageURL, testMode, options)
-    ),
-    // Correzione e semplificazione del tipo di ritorno di feedback
-    feedback: createPuterAction((puter, path: string, message: string) =>
-      puter.ai.chat(
-        [
-          {
-            role: "user",
-            content: [
-              { type: "file", puter_path: path },
-              { type: "text", text: message },
-            ] as ChatContent[], // Cast esplicito a ChatContent[] per l'array
-          },
+    feedback: async (path: string, message: string) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+
+      const messages: ChatMessage[] = [{
+        role: "user",
+        content: [
+          { type: "file", puter_path: path },
+          { type: "text", text: message },
         ],
-        { model: "claude-sonnet-4" }
-      ) as Promise<object> // Assicuriamo che il tipo di ritorno sia compatibile
-    ),
-    img2txt: createPuterAction((puter, image: string | File | Blob, testMode?: boolean) =>
-      puter.ai.img2txt(image, testMode)
-    ),
+      }];
+
+      try {
+        set({ error: null });
+        return await puter.ai.chat(messages, false, {
+          model: "claude-sonnet",
+          temperature: 0.2,
+        });
+      } catch (error) {
+        setError(getErrorMessage(error, "Puter AI could not analyze the resume."));
+        return undefined;
+      }
+    },
+    img2txt: async (image: string | File | Blob, testMode?: boolean) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.ai.img2txt(image, testMode); } catch (error) { setError(getErrorMessage(error, "Puter image recognition failed.")); return undefined; }
+    },
   };
 
   const kvActions = {
-    get: createPuterAction((puter, key: string) => puter.kv.get(key)),
-    set: createPuterAction((puter, key: string, value: string) => puter.kv.set(key, value)),
-    delete: createPuterAction((puter, key: string) => puter.kv.delete(key)),
-    list: createPuterAction((puter, pattern: string, returnValues?: boolean) =>
-      puter.kv.list(pattern, returnValues)
-    ),
-    flush: createPuterAction((puter) => puter.kv.flush()),
+    get: async (key: string) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.kv.get(key); } catch (error) { setError(getErrorMessage(error, "Puter storage read failed.")); return undefined; }
+    },
+    set: async (key: string, value: string) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.kv.set(key, value); } catch (error) { setError(getErrorMessage(error, "Puter storage write failed.")); return undefined; }
+    },
+    delete: async (key: string) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.kv.delete(key); } catch (error) { setError(getErrorMessage(error, "Puter storage deletion failed.")); return undefined; }
+    },
+    list: async (pattern: string, returnValues?: boolean) => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.kv.list(pattern, returnValues); } catch (error) { setError(getErrorMessage(error, "Puter storage list failed.")); return undefined; }
+    },
+    flush: async () => {
+      const puter = requirePuter();
+      if (!puter) return undefined;
+      try { return await puter.kv.flush(); } catch (error) { setError(getErrorMessage(error, "Puter storage reset failed.")); return undefined; }
+    },
   };
 
   return {
@@ -365,5 +324,5 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     kv: kvActions,
     init,
     clearError: () => set({ error: null }),
-  } as PuterStore;
+  };
 });

@@ -1,9 +1,7 @@
-"use client"
-import Script from "next/script";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { usePuterStore } from "@/lib/puter";
-import { useEffect } from "react";
+import { AppProviders } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,29 +13,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const metadata: Metadata = {
+  title: {
+    default: "HireLens",
+    template: "%s | HireLens",
+  },
+  description: "AI-powered resume review matched against a job description using Puter.js.",
+};
 
-  const { init } = usePuterStore();
-
-  useEffect(() => {
-    init()
-  }, [init]);
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(180deg, #070b14 0%, #070b14 70%, #0b1c44 100%)",
-        }}
-      >
-        <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground antialiased`}>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
