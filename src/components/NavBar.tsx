@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FileSearch2, LogOut, Plus } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { usePuterStore } from "@/lib/puter";
 import { cn } from "@/lib/utils";
@@ -24,10 +25,10 @@ export default function NavBar() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 font-semibold" aria-label="HireLens dashboard">
-          <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground"><FileSearch2 className="size-5" aria-hidden="true" /></span>
-          <span>HireLens</span>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex min-w-0 items-center gap-2 font-semibold" aria-label="HireLens dashboard">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><FileSearch2 className="size-5" aria-hidden="true" /></span>
+          <span className="truncate">HireLens</span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
           {links.map((link) => (
@@ -36,8 +37,9 @@ export default function NavBar() {
             </Button>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm"><Link href="/upload"><Plus className="size-4" aria-hidden="true" />New review</Link></Button>
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <ThemeToggle />
+          <Button asChild size="sm"><Link href="/upload"><Plus className="size-4" aria-hidden="true" /><span className="hidden sm:inline">New review</span></Link></Button>
           <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out"><LogOut className="size-4" /></Button>
         </div>
       </div>
