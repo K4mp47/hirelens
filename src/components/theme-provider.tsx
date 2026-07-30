@@ -28,33 +28,26 @@ function applyTheme(theme: Theme) {
 }
 
 function getInitialTheme(): Theme {
-  if (typeof document !== "undefined" && document.documentElement.classList.contains("dark")) {
-    return "dark";
-  }
+  if (typeof window === "undefined") return "light";
 
-  return "light";
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedTheme === "light" || storedTheme === "dark") return storedTheme;
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    const preferredTheme: Theme =
-      storedTheme === "light" || storedTheme === "dark"
-        ? storedTheme
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-
-    setThemeState(preferredTheme);
-    applyTheme(preferredTheme);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
     window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
     setThemeState(nextTheme);
-    applyTheme(nextTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {
